@@ -10,6 +10,7 @@ const generateToken=async (payload)=>{
 
 const decodeToken=async(token)=>{
     const data=jwt.verify(token,process.env.SECRET)
+    
     const userDetails=await user.findById(data._id) 
     return userDetails
 }

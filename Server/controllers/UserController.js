@@ -112,23 +112,23 @@ const login_user=async(req,res,next)=>{
                 if(!isRegistered.isVerified){
                     // now we have to redires user to the      
                     const OTP=onetimepassword()
-                    await user.findByIdAndUpdate(isCreated._id,{verify:OTP,verify_Expiry:new Date()})
+                    await user.findByIdAndUpdate( isRegistered._id,{verify:OTP,verify_Expiry:new Date()})
                       //  now create the new verification toke for mail verification
                       const ismail_send= email_verification(OTP,email)
                       console.log(ismail_send)
                       if(ismail_send){
                           // now generate a token to check if user in present in the db
                           const payload={
-                              _id:isCreated._id,
-                              email:isCreated.email,
+                              _id: isRegistered._id,
+                              email: isRegistered.email,
                               expiresIn:new Date()
                           }
                          const token=await  generateToken(payload)
           
                           // now send the cookie and respons
-                          res.cookie("coinDCX_Verify",token,{expiresIn:"2h"})
-                          
-                          next(handleRes("Created User Sucessful",200,"sucessful",res))
+                          res.cookie("coinDCX_Verify",token,{maxAge:1000*60*60})
+                        //   res.send("Email verification OTP send to Registered Email Account")
+                          next(handleRes("Email verification OTP send to Registered Email Account",200,"sucess",res))
           
                       }else{
                           return next(handleErr(400,"Err in seding email verification please your email credentials",res))
@@ -147,7 +147,7 @@ const login_user=async(req,res,next)=>{
                        const token = await generateToken(payload)
                         // now send the token in the cookie and 
 
-                        res.cookie("coinDCX_Auth",token,{expiresIn:"2d"})
+                        res.cookie("coinDCX_Auth",token,{maxAge:1000*60*60*24})
                         return next(handleRes(true,200,"login Sucessful",res))
                        
                     }else{
@@ -162,8 +162,128 @@ const login_user=async(req,res,next)=>{
         }
 
     }catch(err){
-        return next(handleUnknownErr(err.message))
+        return next(handleErr(404,err.message,res))
     }
 }
 
-module.exports={Register_user,Email_verification,login_user}
+// module to reset user password
+const Reset_password=async (req,res,next)=>{
+    try{
+        // take email from user
+        const {email}=req.body
+
+        // now chaeck if user is registered
+        const isRegistered=await user.findOne({email:email})
+
+        if(isRegistered){
+            const OTP=onetimepassword()
+
+            // now set the reset password token
+            const payload={
+                email:email,
+                _id:isRegistered._id
+            }
+            
+            const token= await generateToken(payload)  
+
+            // now send the otp to the user using email
+            const sendOTP=await email_verification(OTP,email) 
+           
+                await user.findByIdAndUpdate(isRegistered._id,{resetpassword:OTP})
+               
+            // now set the cookie through the password
+            res.cookie("CoinDCX_Reset",token,{secure:false,
+                httpOnly:true,
+                maxAge:1000*60*60
+            })
+            isRegistered.password=undefined
+            isRegistered.resetpassword=undefined
+            isRegistered.verify=undefined
+            isRegistered.verify_Expiry=undefined
+            return next(handleRes(isRegistered,200,"OTP send to your Email Sucessfully",res))
+ 
+            
+        }else{
+            return next(handleErr(404,"Please register the user first",res))
+        }
+
+    }catch(err){
+        return next(handleUnknownErr(err.message,res))
+    }
+}
+
+// now handle the OTP controller
+const ResetPasswordOTP=async(req,res,next)=>{
+try{
+    // take the cookies from the browser
+    const {CoinDCX_Reset}=req.cookies
+
+    // now take the OTP from the user
+    const {OTP}=req.body
+  
+    // now decode the token from the cookie
+    const token = await decodeToken(CoinDCX_Reset)
+
+    const isUser= await user.findById(token._id)
+
+    if(isUser){
+        // now check if the user otp is correct or not 
+        
+        if(OTP==isUser.resetpassword){
+            isUser.password=undefined
+            isUser.resetpassword=undefined
+            await user.findByIdAndUpdate(isUser._id,{resetpassword:undefined,resetpassword_Verified:true})
+            return next(handleRes(isUser,200,"the OTP is verified sucessfull",res))
+        }else{
+            return next(handleErr(404,"the user password does not match",res))
+        }
+    }else{
+        return next(handleErr(400,"the user in not present in the database",res))
+    }
+  
+    
+
+}catch(err){
+    return next(handleErr(404,err.message,res))
+}
+}
+
+//  now handle the change password 
+
+const Change_password=async(req,res,next)=>{
+    try{
+        // now take the new password  from the user
+        const {password}=req.body
+
+        // now take the reset cookies 
+        const {CoinDCX_Reset}=req.body
+
+        // now check if the cookies is preset 
+        const token= await decodeToken(CoinDCX_Reset)
+
+        if(token){
+            const check=await user.findById(token._id)
+
+            if(check.resetpassword_Verified===true){
+                // now change the password
+                if(await check.changepassword(password)){
+                    await user.findByIdAndUpdate(check._id,{resetpassword_Verified:false})
+                    return next(handleRes(user))
+                }else{
+                    return next(handleErr(400,"password is not hashed",res))
+                }
+            }else{
+                return next(handleErr(400,"you have to verify using OTP",res))
+            }
+        }else{
+            return next(handleErr(404,"your reset password token expiured",res ))
+        }
+    }catch(err){
+        return next(handleUnknownErr("err.message",res))
+    }
+}
+
+
+
+
+module.exports={Register_user,Email_verification,login_user,Reset_password,ResetPasswordOTP,Change_password}

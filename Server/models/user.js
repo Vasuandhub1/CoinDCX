@@ -33,6 +33,12 @@ const UserSchema= new mongoose.Schema({
         required:true,
         default:false
     },
+    resetpassword:{
+        type:Number
+    },
+    resetpassword_Verified:{
+        type:Boolean
+    },
     KYC:{
         type:mongoose.Schema.Types.ObjectId,
         ref:"kyc"
@@ -65,6 +71,16 @@ UserSchema.pre("save",async function(next){
 
 UserSchema.methods.comparePassword=async function(password){
     return await bcrypt.compare(password,this.password)  
+}
+
+UserSchema.methods.changepassword=async function(password){
+    await bcrypt.hash(password,10).then((data)=>{
+        this.password=data
+        return true
+    }).catch((err)=>{
+        console.log(err)
+        return false
+    })
 }
 
 

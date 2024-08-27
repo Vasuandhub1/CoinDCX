@@ -3,16 +3,20 @@
 import React from "react"
 import { useState } from "react"
 import Loader from "./loader"
-
+import axios from "axios"
+import { useNavigate } from "react-router-dom"
 import {
   InputOTP,
   InputOTPGroup,
   InputOTPSlot,
 } from "@/components/ui/input-otp"
 
-export function Verify_email_component() {
+export function Verify_email_component({url}) {
+  const navigate=useNavigate()
   const [value, setValue] = useState<string>("")
   const [loder, Setloader] = useState<boolean>(false)
+
+
   console.log(value)
   return (
     <div className="space-y-2 font-mono flex flex-col justify-center items-center text-white">
@@ -20,12 +24,18 @@ export function Verify_email_component() {
       <InputOTP
         maxLength={6}
         value={value}
-        onChange={(value) => {setValue(value)
+        onChange={async(value) => {setValue(value)
+          
             if(value.length>=6){
+              const OTP=value
+              const res=await axios.post(url,{OTP},{withCredentials:true})
                 Setloader(true)
                 setTimeout(()=>{
                     Setloader(false)
-                },5000)
+                    console.log(res)
+                    navigate("/")
+                },1000)
+                
             }
         }}
       >

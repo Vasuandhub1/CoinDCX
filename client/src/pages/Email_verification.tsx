@@ -1,5 +1,6 @@
 import React from 'react'
 import { Verify_email_component } from '@/components/myComponents/verify_email_component'
+import { BASE_URL } from '../../constants'
 
 export default function Email_verification() {
   return (
@@ -12,7 +13,7 @@ export default function Email_verification() {
         </div>
     </div>
    
-   <div className='flex justify-center items-center w-[75%]'><Verify_email_component/></div>
+   <div className='flex justify-center items-center w-[75%]'><Verify_email_component url={`${BASE_URL}/email_verification`}/></div>
   </div>
   )
 }

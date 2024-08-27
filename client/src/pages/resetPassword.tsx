@@ -2,10 +2,12 @@ import React,{useState} from 'react'
 import Forgot_password_component from '@/components/myComponents/forgot_password_component'
 import axios from 'axios'
 import { BASE_URL } from '../../constants'
+import { useNavigate } from 'react-router-dom'
 
 export default function ResetPassword() {
     const [loader,SetLoader]=useState<boolean>(false)
     const [email,Seteamil]=useState<string>("")
+    const navigate=useNavigate()
 
     const handelGetOTP=async()=>{
         console.log("hello")
@@ -14,6 +16,7 @@ export default function ResetPassword() {
         setTimeout(()=>{
             SetLoader(false)
             console.log(res)
+            navigate("/ResetPasswordOTP")
         },2000)
         
     }

@@ -1,6 +1,6 @@
 const handleRes= (data,statu,message,res)=>{
     const stat=statu||200
-    const val=data||"Request sucessful"
+    const val=data||false
     
     return res.status(stat).json({
         data:val,
@@ -19,7 +19,7 @@ const handleErr= (status,message,res)=>{
 }
 
 const handleUnknownErr= (messag,res)=>{
-    const stat=500
+    const stat=403
     const mes=messag||"Internal Server Err"
     
     return res.status(stat).json({

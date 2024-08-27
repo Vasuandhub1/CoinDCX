@@ -11,7 +11,7 @@ const know_your_customer=async(req,res,next)=>{
     // take the data froim the user
     const {adhaar,PAN,DOB}=req.body
     const {file}=req.files
-
+    console.log(file,)
     // now take the user from the cookies
     const {coinDCX_Auth}=req.cookies
 
@@ -44,7 +44,7 @@ const know_your_customer=async(req,res,next)=>{
 }
 }
 catch(err){
-    return next(handleUnknownErr(err.message))
+    return next(handleErr(404,err.message,res))
 }
     
     

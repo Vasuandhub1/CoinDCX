@@ -66,7 +66,7 @@ const Email_verification=async(req,res,next)=>{
         // now take the One time password from the user 
         
         const {OTP}=req.body
-
+        console.log(OTP)
         //check for the OTP 
         const {coinDCX_Verify}= req.cookies
         
@@ -78,7 +78,7 @@ const Email_verification=async(req,res,next)=>{
         if(isUser){
 
             // now match both the otp and the user otp
-            if(OTP===isUser.verify){
+            if(OTP.toString()===isUser.verify.toString()){
                 await user.findByIdAndUpdate(isUser._id,{isVerified:true,verify:0})
                 return next(handleRes(true,200,"Email verified sucessful",res))
             }else{
@@ -128,7 +128,7 @@ const login_user=async(req,res,next)=>{
                           // now send the cookie and respons
                           res.cookie("coinDCX_Verify",token,{maxAge:1000*60*60})
                         //   res.send("Email verification OTP send to Registered Email Account")
-                          next(handleRes("Email verification OTP send to Registered Email Account",200,"sucess",res))
+                          next(handleRes(false,200,"sucess",res))
           
                       }else{
                           return next(handleErr(400,"Err in seding email verification please your email credentials",res))
@@ -148,7 +148,7 @@ const login_user=async(req,res,next)=>{
                         // now send the token in the cookie and 
 
                         res.cookie("coinDCX_Auth",token,{maxAge:1000*60*60*24})
-                        return next(handleRes(true,200,"login Sucessful",res))
+                        return next(handleRes(payload,200,"login Sucessful",res))
                        
                     }else{
                         return next(handleErr(400,"please check your Credentials",res))
